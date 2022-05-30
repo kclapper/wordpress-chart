@@ -1,0 +1,9 @@
+---
+wordpress:
+  replicas: 1
+  version: "5.9"
+
+
+db:
+  version: "10.7"
+  replicas: 1

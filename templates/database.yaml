@@ -1,0 +1,55 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mariadb
+spec:
+  replicas: {{ .Values.db.replicas }}
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: "{{ .Release.Name }}-mariadb"
+          image: "mariadb:{{ .Values.db.version }}"
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "250Mi"
+              cpu: "250m"
+            requests:
+              memory: "20Mi"
+              cpu: "10m"
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MARIADB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database-login
+                  key: username
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-login
+                  key: password
+            - name: MARIADB_ROOT_PASSWORD
+              value: "{{ randAlphaNum 32 | b64enc }}"
+            - name: MARIADB_DATABASE
+              value: "{{ .Release.Name }}-database"
+            
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ .Release.Name }}-mariadb"
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+  selector:
+    app: "mariadb"
